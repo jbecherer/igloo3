@@ -32,7 +32,7 @@ class fileFrame(): # {{{
     def addF2List(self):
         # file dialog
         fname = filedialog.askopenfilename(initialdir='./test_data_files/', title='choose file', 
-                                            filetypes=(('sience data' ,'*.tbd'), ('full science' ,'*.ebd'), ('eng data' ,'*.sbd'), ('full eng' ,'*.dbd'), ('all', '*.*')))
+                                            filetypes=(('full science' ,'*.ebd'), ('sience data' ,'*.tbd'),  ('eng data' ,'*.sbd'), ('full eng' ,'*.dbd'), ('all', '*.*')))
         
         # List index
         ItemInd = len(self.fileList)
@@ -132,6 +132,9 @@ class varFrame(): # {{{
                 self.plotF.Data[i] = np.concatenate( (self.plotF.Data[i],tmpdata[i]) )
                #print(len(self.plotF.Data))
                #print(self.plotF.Data[i])
+        
+        # convert time data
+        self.plotF.Data[0] = np.asarray([dt.datetime.utcfromtimestamp(t) for t in self.plotF.Data[0]])
 
 
             
@@ -252,14 +255,22 @@ class plotFrame(): # {{{
 
 
     def do_plot(self):
+        p = []
         for ax in range(self.Naxis-1):
-            p =plt.subplot(self.Naxis-1,1,ax+1) 
+            if ax == 0:
+                p.append(plt.subplot(self.Naxis-1,1,ax+1)) 
+            else:
+                p.append(plt.subplot(self.Naxis-1,1,ax+1, sharex=p[0] )) 
+
             plt.plot(self.Data[self.radioVar[0].get()], self.Data[self.radioVar[ax+1].get()], '.')
-            p.set_ylabel(self.varList[self.radioVar[ax+1].get()], fontsize=14)
+            txt = p[ax].text( 0, 1, self.varList[self.radioVar[ax+1].get()], ha='left', va='top', transform=p[ax].transAxes)
+            txt.set_fontsize(12)
+            txt.set_backgroundcolor([1, 1, 1, .5])
+            
             if ax != self.Naxis-2:
-                pass
+                p[ax].tick_params(labelbottom=False)
             if ax == self.Naxis-2:
-                p.set_xlabel(self.varList[self.radioVar[0].get()], fontsize=14)
+                p[ax].set_xlabel(self.varList[self.radioVar[0].get()], fontsize=14)
             
         
         plt.show()
