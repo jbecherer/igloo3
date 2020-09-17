@@ -32,6 +32,8 @@ class fileFrame(): # {{{
         # add main buittoms 
         self.addFileBut = tk.Button(self.Frame, text='add file', command=self.addF2List)
         self.addFileBut.grid(row=0, column=0)
+        self.clearFileBut = tk.Button(self.Frame, text='clear list', command=self.clearList)
+        self.clearFileBut.grid(row=0, column=1)
         self.loadFilesBut = tk.Button(self.Frame, text='update file and variable list', command=self.load_files, bg='lightblue')
         self.loadFilesBut.grid(row=100, column=0, columnspan=2)
 
@@ -68,6 +70,12 @@ class fileFrame(): # {{{
             self.labRMList[-1][1].grid(row=ItemInd+1, column=0)
             self.labRMList[-1][2].grid(row=ItemInd+1, column=1)
 
+    def clearList(self):
+        for i in range(len(self.labRMList)-1, -1, -1): # pop items backwards
+            self.labRMList[i][1].destroy()
+            self.labRMList[i][2].destroy()
+            self.Dcont.rmItemFileList(i)
+            self.labRMList.pop(i)
 
     def removeItemFromList(self, ItemInd):
 
