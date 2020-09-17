@@ -13,6 +13,7 @@ import dbdreader
 
 class fileFrame(): # {{{
 
+
     def __init__(self, rootW):
         self.Frame = tk.LabelFrame(rootW, text='files', padx=10, pady=10, borderwidth=2)
 
@@ -28,23 +29,27 @@ class fileFrame(): # {{{
         self.varF = varFrame(rootW)
         self.varF.Frame.grid(row=0, column=2, padx=5,  pady=5)
 
+        self.init_path = './'
+
 
     def addF2List(self):
         # file dialog
-        fname = filedialog.askopenfilename(initialdir='./test_data_files/', title='choose file', 
+        fnames  = filedialog.askopenfilenames(initialdir=self.init_path, title='choose file', 
                                             filetypes=(('full science' ,'*.ebd'), ('sience data' ,'*.tbd'),  ('eng data' ,'*.sbd'), ('full eng' ,'*.dbd'), ('all', '*.*')))
         
-        # List index
-        ItemInd = len(self.fileList)
 
-        # add fid to fileList
-        newLab = tk.Label( self.Frame, text=os.path.basename(fname) )
-        rmBot  = tk.Button(self.Frame, text='remove', command= lambda: self.removeItemFromList(ItemInd) )
-        self.fileList.append([fname, newLab, rmBot])
+        for fname in fnames:
+            # List index
+            ItemInd = len(self.fileList)
 
-        # put new fname in Frame
-        self.fileList[-1][1].grid(row=ItemInd+1, column=0)
-        self.fileList[-1][2].grid(row=ItemInd+1, column=1)
+            # add fid to fileList
+            newLab = tk.Label( self.Frame, text=os.path.basename(fname) )
+            rmBot  = tk.Button(self.Frame, text='remove', command= lambda: self.removeItemFromList(ItemInd) )
+            self.fileList.append([fname, newLab, rmBot])
+
+            # put new fname in Frame
+            self.fileList[-1][1].grid(row=ItemInd+1, column=0)
+            self.fileList[-1][2].grid(row=ItemInd+1, column=1)
 
 
     def removeItemFromList(self, ItemInd):
