@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog 
+from tkinter import ttk 
 import numpy as np
 import matplotlib.pylab as plt
 import sys
@@ -92,7 +93,7 @@ class varFrame(): # {{{
         self.optionList = ['sci_water_temp', 'sci_water_cond'] # option list
         self.newOption = tk.StringVar()  # initialize option variable
         self.newOption.set(self.optionList[0]) # default option
-        self.dropdown = tk.OptionMenu(self.Frame, self.newOption, *self.optionList)
+        self.dropdown = ttk.Combobox(self.Frame, textvariable=self.newOption, values=self.optionList)
         self.dropdown.grid(row=0,column=0, columnspan=1)
 
         self.addVarBut = tk.Button(self.Frame, text='add var', command=self.addVar2List)
@@ -171,7 +172,7 @@ class varFrame(): # {{{
         self.optionList = varNames
         self.newOption.set(varNames[0]) # default option
         self.dropdown.destroy()
-        self.dropdown = tk.OptionMenu(self.Frame, self.newOption, *self.optionList)
+        self.dropdown = ttk.Combobox(self.Frame, textvariable=self.newOption, values=self.optionList)
         self.dropdown.grid(row=0,column=0, columnspan=1)
         
     def removeItemFromList(self, ItemInd):
