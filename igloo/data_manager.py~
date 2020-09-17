@@ -1,0 +1,66 @@
+import logging
+
+import dbdreader
+
+logger = logging.getLogger("data_manager")
+logger.setLevel(logging.DEBUG)
+
+class Dataset(object):
+
+    def __init__(self, filenames):
+        self.filenames = filenames
+        self.variables = []
+        self._load_dbs()
+        
+    def delete_filenames(self, filenames):
+        for fn in filenames:
+            self.filenames.pop(fn)
+
+    def get_filenames(self):
+        return self.filenames
+
+    def get_variables(self):
+        return self.variables
+
+    def _load_dbs(self):
+        logger.debug("Reading dbd files...")
+        fns = dbdreader.DBDList(self.filenames)
+        fns.sort()
+        self.dbds = dbdreader.MultiDBD(filenames=fns)
+        logger.debug("All dbd files read.")
+
+
+class DataManager(object):
+
+    def __init__(self):
+        self.datasets = []
+        
+
+    def add_dataset(self, filenames):
+        pass
+
+    def delete_files_from_dataset(self, dataset_id, *filenames):
+        pass
+
+    def delete_dataset(self, dataset_id):
+        pass
+
+    def get_filenames(self):
+        pass
+
+    def get_variables(self):
+        pass
+
+    def get_file_info(self, dataset_id, filename, info_field):
+        pass
+
+
+if __name__ == "__main__":
+    import glob
+    import os
+    
+    fns = os.path.expanduser("~/gliderdata/nsb3_201907/ld/comet*.[st]bd")
+    
+    
+    
+    
