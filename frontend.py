@@ -9,6 +9,8 @@ import datetime as dt
 import scipy.io
 import dbdreader
 from backend import * 
+import FigurePlots
+
 
 
 
@@ -296,25 +298,11 @@ class plotFrame(): # {{{
 
 
     def do_plot(self):
-        p = []
-        for ax in range(self.Naxis-1):
-            if ax == 0:
-                p.append(plt.subplot(self.Naxis-1,1,ax+1)) 
-            else:
-                p.append(plt.subplot(self.Naxis-1,1,ax+1, sharex=p[0] )) 
+        dataAxMap = []
+        for ax in range(self.Naxis):
+            dataAxMap.append(self.radioVar[ax].get())
 
-            plt.plot(self.Dcont.Data[self.radioVar[0].get()], self.Dcont.Data[self.radioVar[ax+1].get()], '.')
-            txt = p[ax].text( 0, 1, self.varList[self.radioVar[ax+1].get()], ha='left', va='top', transform=p[ax].transAxes)
-            txt.set_fontsize(12)
-            txt.set_backgroundcolor([1, 1, 1, .5])
-            
-            if ax != self.Naxis-2:
-                p[ax].tick_params(labelbottom=False)
-            if ax == self.Naxis-2:
-                p[ax].set_xlabel(self.varList[self.radioVar[0].get()], fontsize=14)
-            
-        
-        plt.show()
+        FigurePlots.FigureFrame(self.Dcont, dataAxMap)
 
 # }}}
 
