@@ -165,28 +165,88 @@ class Dataset(object):
 
     
 class DataManager(object):
-
+    '''Data manager
+    
+    This class offers a container for datasets. A number of methods
+    are provided to manipulate datasets and extract basic information
+    from the datasets.
+    '''
+    
     def __init__(self):
         self.datasets = []
-        
 
     def add_dataset(self, filenames):
-        pass
+        ''' Add a dataset
+        
+        Parameters
+        ----------
+        filenames : list of str
+            list of filenames
+        '''
+        dataset = Dataset(filenames)
+        self.datasets.append(dataset)
 
     def delete_files_from_dataset(self, dataset_id, *filenames):
         pass
 
     def delete_dataset(self, dataset_id):
-        pass
+        ''' Deletes an entire dataset
+
+        Parameters
+        ----------
+        dataset_id : int
+            sequential number of dataset
+        '''
+        self.datasets.pop(dataset_id)
+        
 
     def get_filenames(self):
-        pass
-
+        ''' Get filename list per dataset
+        
+        Returns
+        -------
+        list of str
+            list of filenames per dataset
+        
+        '''
+        filenames = [d.get_filenames() for d in self.datasets]
+        return filenames
+    
     def get_parameters(self):
-        pass
+        ''' Get a list of unique and sorted parameter names
 
+        Returns
+        -------
+        list of str
+            list of parameter names (sorted and unique)
+        '''
+        s = set()
+        for d in self.datasets:
+            for p in d.get_parameters():
+                s.add(p)
+        parameters = list(s)
+        parameters.sort()
+        return parameters
+    
     def get_file_info(self, dataset_id, filename, info_field):
-        pass
+        ''' Get file info
+        
+        Parameters
+        ----------
+        dataset_id : int
+            sequential number of dataset
+        filename : str
+            name of file
+        info_field : str, {"file_open", "mission"}
+            type of information to return
+        
+        Returns
+        -------
+        int or str
+            file open time (int), mission name (str)
+        '''
+        d = self.datasets[dataset_id]
+        return d.get_file_info(filename, info_field)
 
 
 if __name__ == "__main__":
@@ -195,6 +255,7 @@ if __name__ == "__main__":
     path = "~/gliderdata/nsb3_201907/ld/comet*.[st]bd"
     fns = glob.glob(os.path.expanduser(path))
     
-    ds = Dataset(fns)
+    dm = DataManager()
 
-    
+    dm.add_dataset(fns[:10])
+    dm.add_dataset(fns[10:20])
