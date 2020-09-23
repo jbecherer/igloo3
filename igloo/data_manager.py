@@ -1,11 +1,9 @@
 from itertools import chain
 
-import logging
-
 import dbdreader
 
-logger = logging.getLogger("data_manager")
-logger.setLevel(logging.DEBUG)
+import mlogging
+logger = mlogging.get_logger(__name__, "debug")
 
 class Dataset(object):
     '''General dataset containing a number of glider dbd files
