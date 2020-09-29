@@ -1,4 +1,5 @@
 import tkinter
+import os.path as ospath
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2
@@ -9,8 +10,10 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.axes import Axes
+from matplotlib.text import Annotation
 import matplotlib
 import numpy as np
+from scipy.interpolate import interp1d
 
 import mlogging
 logger = mlogging.get_logger(__name__, "debug")
@@ -112,31 +115,52 @@ class IglooFigure(FigureOptionParser):
     def widget(self):
         ''' TK widget'''
         return self.canvas.get_tk_widget()
+
+    def get_filename_time_mapping(self, dataset, timestamps):
+        filenames = dataset.get_filenames()
+        file_open = [dataset.get_file_info(fn, "file_open") for fn in filenames]
+        _fun = interp1d(file_open, range(len(file_open)))
+        mapping_fun = lambda x : ospath.basename(filenames[int(_fun(x))])
+        return mapping_fun
         
-    def line_plot(self, x, y, ax_id=None, label=''):
+    def label_formatter(self, parameter, unit):
+        s = f"{parameter} ({unit})"
+        return s
+    
+    def line_plot(self, dataset, parameter, coparameter, ax_id=None):
         ''' Plot a line
 
         Parameters
         ----------
-        x : array of float
-            x data
-        y : array of float
-            y data
-        ax_id : int or None 
-           id of axis. Active axes id is used if ax_id==None.
-        label : str
-            text to add to the ylabel of the axes object
+        dataset : datamanager.Dataset instance
+            dataset
+        parameter : str
+            parameter name to plot
+        coparameter : str or None
+            coparameter name to plot. If None, parameter is plotted agains time.
+        ax_id : int or None
+            id of axis (row). if None, then the active axes are used. 
         '''
         ax_id = ax_id or self.active_ax
+        if coparameter is None:
+            x, y = dataset.get_timeseries(parameter)
+            label = self.label_formatter(parameter, dataset.get_unit(parameter))
+            mapping_fun = self.get_filename_time_mapping(dataset, x)
+        else:
+            x, y = dataset.get_xy(parameter, coparameter)
+            label = self.label_formatter(coparameter, dataset.get_unit(coparameter))
+            mapping_fun = None
         p = self.ax[ax_id].plot(x, y, picker=IglooFigure.PICKRADIUS)[0]
-        self.plot_objects[p] = dict(label=label, ax=self.ax[ax_id])
+        self.plot_objects[p] = dict(label=label, ax=self.ax[ax_id], mapping_fun=mapping_fun)
         self.update_ylabels(self.ax[ax_id])
         
     def onPick(self, event):
-        if event.mouseevent.button==3 and isinstance(event.artist, Line2D):
-            # remove a line when picked with right button (3)
-            self.plot_objects.pop(event.artist)
-            self.update_ylabels(event.artist.axes)
+        if event.mouseevent.button==3 and \
+           (isinstance(event.artist, Line2D) or isinstance(event.artist, Annotation)):
+            # remove an artist when picked with right button (3)
+            if isinstance(event.artist, Line2D): # for lines only.
+                self.plot_objects.pop(event.artist)
+                self.update_ylabels(event.artist.axes)
             event.artist.remove()
             self.canvas.draw()
             
@@ -144,6 +168,10 @@ class IglooFigure(FigureOptionParser):
             # clicked axes active
             index = self.ax.index(event.artist)
             logger.debug(f"Active ax : {index}")
+        elif event.mouseevent.button == 2 and isinstance(event.artist, Line2D):
+            self.display_filename(event)
+        else:
+            logger.debug(event.artist)
             
     def update_ylabels(self, ax):
         ''' Updates ylabels for given axes instance'''
@@ -153,7 +181,8 @@ class IglooFigure(FigureOptionParser):
                 s.append(v['label'])
         label = "; ".join(s)
         ax.set_ylabel(label)
-
+        self.canvas.draw()
+        
     def toggle_xaxes_lock(self):
         ax_id = self.active_ax
         self.lock_axes = not self.lock_axes
@@ -166,6 +195,22 @@ class IglooFigure(FigureOptionParser):
             for a in g.get_siblings(self.ax[ax_id]):
                 g.remove(a)
         self.canvas.draw()
+
+    def display_filename(self, event):
+        timestamp = event.mouseevent.xdata
+        value = event.mouseevent.ydata
+        line2D = event.artist
+        plot_object = self.plot_objects[line2D]
+        filename = plot_object['mapping_fun'](timestamp)
+        ax = plot_object['ax']
+        annotation = ax.annotate(filename,
+                                 xy=(timestamp, value), xycoords='data',
+                                 xytext=(-15, 25), textcoords='offset points',
+                                 arrowprops=dict(facecolor='black', shrink=0.05),
+                                 horizontalalignment='right', verticalalignment='bottom')
+        annotation.set_picker(5)
+        self.canvas.draw() # required for the arrow and text to appear.
+        print(f"Clicked data point belongs to {filename}")
             
 class FigureManager(object):
     ''' Main interface for plotting data in figures
@@ -199,25 +244,25 @@ class FigureManager(object):
         self.figures[widget] = igloo_figure
         return widget
 
-    def line_plot(self, widget, x, y, ax_id=None, label=''):
+    def line_plot(self, widget, dataset, parameter, coparameter=None, ax_id=None):
         ''' Line plot for 2D data 
 
         Parameters
         ----------
         widget : TK widget
             target window
-        x : array of float
-            x data
-        y : array of float
-            y data
+        dataset : datamanager.Dataset instance
+            dataset
+        parameter : str
+            parameter name to plot
+        coparameter : str or None
+            coparameter name to plot. If None, parameter is plotted agains time.
         ax_id : int or None
             id of axis (row). if None, then the active axes are used. 
-        label : str ('')
-            string to add to the axes ylabel.
         '''
         f = self.figures[widget]
-        f.line_plot(x, y, ax_id, label)
-
+        f.line_plot(dataset, parameter, coparameter, ax_id)
+        
     def toggle_xaxes_lock(self, widget):
         f = self.figures[widget]
         f.toggle_xaxes_lock()
@@ -227,21 +272,26 @@ class FigureManager(object):
         
 if __name__ == "__main__":
     import numpy as np
+    import glob
+    import os
+    from data_manager import *
+    path = "~/gliderdata/nsb3_201907/ld/comet*.[st]bd"
+    fns = glob.glob(os.path.expanduser(path))
+    
+    dm = DataManager()
+
+    dm.add_dataset(fns[:10])
+    dm.add_dataset(fns[10:20])
+
+    
     root = tkinter.Tk()
     root.wm_title("Embedding in Tk")
 
-    def on_key_press(event):
-        print("you pressed {}".format(event.key))
-        key_press_handler(event, canvas, toolbar)
-
 
     fm = FigureManager()
-    options = dict(number_of_axes=2, lock_axes=False)
-    widget = fm.new_figure(root, **options)
+    fm_options = dict(number_of_axes=2, lock_axes=False)
+    widget = fm.new_figure(root, **fm_options)
     widget.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    #canvas.mpl_connect("key_press_event", on_key_press)
-    f = fm.figures[widget]
-    tb = f.toolbar
 
     def _quit():
         root.quit()     # stops mainloop
@@ -252,13 +302,14 @@ if __name__ == "__main__":
     button = tkinter.Button(master=root, text="Quit", command=_quit)
     button.pack(side=tkinter.BOTTOM)
 
-    fm.line_plot(widget, np.arange(10), np.arange(10)**2,label='line1 (m)')
-    fm.line_plot(widget, np.arange(10), 5+np.arange(10)**2, label="ballast (cm)")
+    fm.line_plot(widget, dm.datasets[0], "m_depth")
+    fm.line_plot(widget, dm.datasets[1], "m_depth")
+    
     fm.figures[widget].active_ax=1
-    fm.line_plot(widget, np.arange(10)+5, 5-np.arange(10)**2, label="ballast (cm)")
     fm.toggle_xaxes_lock(widget)
-    fm.toggle_xaxes_lock(widget)
-    f = fm.figures[widget]
+    fm.line_plot(widget, dm.datasets[1], "m_de_oil_vol")
+    fm.line_plot(widget, dm.datasets[1], "m_pitch")
+    
 
     tkinter.mainloop()
 

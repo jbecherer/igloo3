@@ -46,6 +46,9 @@ class Dataset(object):
         parameters = self.dbds.parameterNames
         return parameters['eng']+parameters['sci']
 
+    def get_unit(self, parameter):
+        return self.dbds.parameterUnits[parameter]
+    
     def _get_info(self, dbd, field):
         if field == "file_open":
             info = dbd.get_fileopen_time()
