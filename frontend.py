@@ -137,7 +137,9 @@ class fileFrame(): # {{{
         self.Dcont.updateParameterList()
         self.varF.update_dropdown( self.Dcont.parameterList)
         self.varF.updateFileListLabel()
-        self.varF.set_default_varlist()
+        if self.Dcont.varList == ['variable'] or len(self.Dcont.varList)==0 : 
+          # if there are no variables set use default varible set
+          self.varF.set_default_varlist()
 
 # }}}
 
