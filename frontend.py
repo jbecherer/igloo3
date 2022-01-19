@@ -59,6 +59,17 @@ class fileFrame(): # {{{
       with open('./last_state.pkl','rb') as inp:
         D = pickle.load(inp)
 
+      self.Dcont.fileList = D.fileList
+      self.Dcont.parameterList = D.parameterList
+      self.Dcont.init_path = D.init_path
+      self.Dcont.varList = D.varList  
+
+      self.empty_file_list()
+      self.generate_file_list()
+
+      self.varF.destroyVarListMenue()
+      self.varF.generateVarList()
+
     
     def addF2List(self):
         # file dialog
