@@ -259,9 +259,9 @@ class varFrame(): # {{{
       file_extention = self.Dcont.fileList[0][-3:]
 
       if file_extention in ['ebd', 'tbd']:
-        self.Dcont.varList = ['sci_water_temp', 'sci_water_cond', 'sci_water_pressure']
+        self.Dcont.varList = ['file_no', 'sci_water_temp', 'sci_water_cond', 'sci_water_pressure']
       else:
-        self.Dcont.varList = ['m_lat', 'm_lon', 'm_gps_lat', 'm_gps_lon', 'm_battpos', 'm_pitch']
+        self.Dcont.varList = ['file_no','m_lat', 'm_lon', 'm_gps_lat', 'm_gps_lon', 'm_battpos', 'm_pitch']
 
       self.destroyVarListMenue()
       self.generateVarList()

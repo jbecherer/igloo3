@@ -5,7 +5,6 @@ import numpy as np
 class DataContainer(): # {{{
     def __init__(self):
         self.fileList = []
-        #self.parameterList = ['sci_water_temp', 'sci_water_cond', 'm_lat', 'm_lon', 'm_gps_lat', 'm_gps_lon', 'm_battpos', 'm_pitch']
         self.parameterList = ['variable']
         self.Data = []
         self.init_path = './'
@@ -66,13 +65,16 @@ class DataContainer(): # {{{
             #tmpdata = tmpdbd.get_sync( *self.varList ) 
             tmpdata = tmpdbd.get_sync( *loadingList ) 
             cnt = 1  # index 0 is or the time vector
-            self.Data[0] = np.concatenate( (self.Data[0],tmpdata[0]) )
+            self.Data[0] = np.concatenate( (self.Data[0],tmpdata[0]) ) # time vector
             for i in range(len(inorout)):
                 if inorout[i] == 1:
                   self.Data[i+1] = np.concatenate( (self.Data[i+1],tmpdata[cnt]) )
                   cnt += 1
                 else: # if the variable was not in the file fill with nans
-                  self.Data[i+1] = np.concatenate( (self.Data[i+1], np.ones(tmpdata[0].shape)*np.nan ) )
+                  if self.varList[i] in ['file_no']:
+                    self.Data[i+1] = np.concatenate( (self.Data[i+1], np.ones(tmpdata[0].shape)*f ) )
+                  else:
+                    self.Data[i+1] = np.concatenate( (self.Data[i+1], np.ones(tmpdata[0].shape)*np.nan ) )
         
         # convert time data
         self.Data[0] = np.asarray([dt.datetime.utcfromtimestamp(t) for t in self.Data[0]])
