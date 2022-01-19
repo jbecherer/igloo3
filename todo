@@ -1,0 +1,35 @@
+- save variable state: 
+
+- List of default variables 
+
+- Add file number to plot 
+
+- standard plots
+  m_lat - m_lon
+  m_gps_lat - m_gps_lon
+  m_battpos - m_pitch
+
+- fix file removal
+
+- loading bug  for varaibles, when wrong variable names are provided
+
+- loading bug with DBD reader parameterlist in backend.py:43
+
+
+dbd : org file all parameters no science data
+ebd : scince info
+
+sbd : limited list of varaibles for iridium 
+tbd : scince for iridium 
+
+each of the extenition has there one cash
+
+what to do on the ship. 
+on the glider via freewave in  STATE/CASH 
+
+test before deployment..... 
+
+
+
+
+

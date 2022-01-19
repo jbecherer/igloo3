@@ -18,7 +18,7 @@ def main():
     rootWindow.title('igloo3')
 
     Dcont = DataContainer()
-
+    
     fileF = fileFrame(rootWindow, Dcont)
     fileF.Frame.grid(row=0, column=0, padx=5,  pady=5)
 

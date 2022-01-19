@@ -11,6 +11,7 @@ import dbdreader
 from backend import * 
 import FigurePlots
 
+import pickle
 
 
 
@@ -37,18 +38,33 @@ class fileFrame(): # {{{
         self.loadFilesBut = tk.Button(self.Frame, text='update file and variable list', command=self.load_files, bg='lightblue')
         self.loadFilesBut.grid(row=100, column=0, columnspan=2)
 
+        # bottom to save and load State
+        self.loadStateBut = tk.Button(self.Frame, text='load state', command=self.loadState)
+        self.loadStateBut.grid(row=101, column=0)
+        self.saveStateBut = tk.Button(self.Frame, text='save state', command=self.saveState)
+        self.saveStateBut.grid(row=101, column=1)
+
         # List of filenames + remove buttons
         self.labRMList = []
 
-        # inital path to look for files
-        self.init_path = './'
 
+    def saveState(self): # this function saves the current configuration to a file
+      print('saving the State')
 
+      with open('last_state.pkl', 'wb') as outp:
+        pickle.dump(self.Dcont, outp, pickle.HIGHEST_PROTOCOL)
+
+    def loadState(self): # this function loads the current configuration to a file
+      print('loading the State')
+      with open('./last_state.pkl','rb') as inp:
+        D = pickle.load(inp)
+
+    
     def addF2List(self):
         # file dialog
-        fnames  = filedialog.askopenfilenames(initialdir=self.init_path, title='choose file', 
-                                            filetypes=(('full science' ,'*.ebd'), ('sience data' ,'*.tbd'),  
-                                                        ('eng data' ,'*.sbd'), ('full eng' ,'*.dbd'), ('all', '*.*')))
+        fnames  = filedialog.askopenfilenames(initialdir=self.Dcont.init_path, title='choose file', 
+                                            filetypes=(('all', '*.*'), ('full eng' ,'*.dbd'),('full science' ,'*.ebd'),  
+                                                        ('eng data' ,'*.sbd'), ('science data' ,'*.tbd') ))
         
         for fname in fnames: # loop through all files to be opened
 
@@ -56,7 +72,7 @@ class fileFrame(): # {{{
             ItemInd = len(self.labRMList)
 
             # set new search path for next open file dialog
-            self.init_path = os.path.dirname(fname)
+            self.Dcont.init_path = os.path.dirname(fname)
 
             # add filename to file List
             self.Dcont.addItem2FileList(fname)
@@ -105,6 +121,7 @@ class fileFrame(): # {{{
         self.Dcont.updateParameterList()
         self.varF.update_dropdown( self.Dcont.parameterList)
         self.varF.updateFileListLabel()
+        self.varF.set_default_varlist()
 
 # }}}
 
@@ -141,15 +158,29 @@ class varFrame(): # {{{
         # 1st variable in list is always time (also due to dbdreader.get_sync())
         tk.Label( self.Frame, text='time' ).grid(row=1,column=0)
 
-        # list of labels and remove buttom for variables
-        self.labRMList = []
-        self.createVarListItem(self.optionList[0])
-        self.createVarListItem(self.optionList[1])
-        self.plotVarList()
+        # Inital List list of labels and remove buttom for variables
+        
+        self.generateVarList()
 
         # just a file counter 
         self.FileLab = tk.Label( self.Frame, text='files to load: ' + str(len(self.Dcont.fileList)) )
         self.FileLab.grid(row=99, column=0, columnspan=2)
+
+    def generateVarList(self): 
+        self.labRMList = []
+        varList = self.Dcont.varList
+        self.Dcont.varList = []
+        for op in varList :  
+          self.createVarListItem(op)
+        self.plotVarList()
+
+    def destroyVarListMenue(self):
+      for i in range(len(self.labRMList)):
+       #self.labRMList[i][1].grid_forget()
+       #self.labRMList[i][2].grid_forget()
+        self.labRMList[i][1].destroy()
+        self.labRMList[i][2].destroy()
+      self.labRMList = []
 
 
     def updateFileListLabel(self):
@@ -193,27 +224,43 @@ class varFrame(): # {{{
         self.dropdown.destroy()
         self.dropdown = ttk.Combobox(self.Frame, textvariable=self.newOption, values=self.optionList)
         self.dropdown.grid(row=0,column=0, columnspan=1)
+
+
+#    def search_var(event):
+#      value = event.widget.get()
+#
+#      if value == '':
+#          self.dropdown['values'] = self.optionList
+#      else:
+#          search_list = []
+#          for item in self.optionList:
+#              if value.lower() in item.lower():
+#                  search_list.append(item)
+#
+#          self.dropdown['values'] = search_list 
+#
+
         
     def removeItemFromList(self, ItemInd):
-        # destroy Item in Front end
-        self.labRMList[ItemInd][1].destroy()
-        self.labRMList[ItemInd][2].destroy()
-        self.labRMList.pop(ItemInd)
-
         # remove varialbe from data container List
         self.Dcont.rmItemVarList(ItemInd)
 
-        # re arrange variable list in front end
-        newLLen = len(self.labRMList)
-        for i in range(newLLen):
-            self.labRMList[i][1].grid_forget()
-            self.labRMList[i][2].grid_forget()
+        self.destroyVarListMenue()
+        self.generateVarList()
 
-        for i in range(newLLen):
-            self.labRMList[i][1].grid(row=i+2, column=0)
-            self.labRMList[i][2].grid(row=i+2, column=1)
-            #  del bottom needs to be redirected
-            self.labRMList[i][2].config(command= lambda: self.removeItemFromList(i))
+    def set_default_varlist(self):
+      # depending on the file ending a standard list of parameters is chosen
+
+      file_extention = self.Dcont.fileList[0][-3:]
+
+      if file_extention in ['ebd', 'tbd']:
+        self.Dcont.varList = ['sci_water_temp', 'sci_water_cond', 'sci_water_pressure']
+      else:
+        self.Dcont.varList = ['m_lat', 'm_lon', 'm_gps_lat', 'm_gps_lon', 'm_battpos', 'm_pitch']
+
+      self.destroyVarListMenue()
+      self.generateVarList()
+
 
     def loadData(self):
         # update variable list in plotting frame
