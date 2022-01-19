@@ -65,56 +65,61 @@ class fileFrame(): # {{{
         fnames  = filedialog.askopenfilenames(initialdir=self.Dcont.init_path, title='choose file', 
                                             filetypes=(('all', '*.*'), ('full eng' ,'*.dbd'),('full science' ,'*.ebd'),  
                                                         ('eng data' ,'*.sbd'), ('science data' ,'*.tbd') ))
-        
+
+        # set new search path for next open file dialog
+
         for fname in fnames: # loop through all files to be opened
-
-            # get new index at the end of the List 
-            ItemInd = len(self.labRMList)
-
-            # set new search path for next open file dialog
-            self.Dcont.init_path = os.path.dirname(fname)
-
             # add filename to file List
             self.Dcont.addItem2FileList(fname)
 
-            # front end List of filelabels and remove buttons
-            newLab = tk.Label( self.Frame, text=os.path.basename(fname) )
-            rmBot  = tk.Button(self.Frame, text='remove', command= lambda: self.removeItemFromList(ItemInd) )
-            self.labRMList.append([ItemInd, newLab, rmBot])
+        if len(fname)> 0 :
+          self.Dcont.init_path = os.path.dirname(fname)
+  
+        self.empty_file_list()
+        self.generate_file_list()
 
-            # put new fname and remove button in frame
-            self.labRMList[-1][1].grid(row=ItemInd+1, column=0)
-            self.labRMList[-1][2].grid(row=ItemInd+1, column=1)
 
-    def clearList(self):
+
+        
+
+    def generate_file_list(self):
+        fnames = self.Dcont.fileList
+        
+        self.labRMList = []
+        for i in range(len(fnames)): # loop through all files to be opened
+              fname = fnames[i]
+              self.generate_file_entry(fname)
+
+
+    def generate_file_entry(self, fname):
+      i = len(self.labRMList)
+      newLab = tk.Label(self.Frame, text=os.path.basename(fname) )
+      rmBot  = tk.Button(self.Frame, text='remove', command= lambda: self.removeItemFromList(i) )
+      # put new fname and remove button in frame
+      newLab.grid(row=i+1, column=0)
+      rmBot.grid(row=i+1, column=1)
+      self.labRMList.append([i, newLab, rmBot])
+
+
+    def empty_file_list(self):
         for i in range(len(self.labRMList)-1, -1, -1): # pop items backwards
             self.labRMList[i][1].destroy()
             self.labRMList[i][2].destroy()
-            self.Dcont.rmItemFileList(i)
             self.labRMList.pop(i)
+
+    def clearList(self):
+        for i in range(len(self.labRMList)-1, -1, -1): # pop items backwards
+            self.Dcont.rmItemFileList(i)
+        self.empty_file_list()
 
     def removeItemFromList(self, ItemInd):
 
-        # remove old file item 
-        # remove from front end list
-        self.labRMList[ItemInd][1].destroy()
-        self.labRMList[ItemInd][2].destroy()
-        self.labRMList.pop(ItemInd)
         # remove from file data structure
         self.Dcont.rmItemFileList(ItemInd)
 
-        # update the rest of the items
-        newLLen = len(self.labRMList)
-        for i in range(newLLen):
-            self.labRMList[i][1].grid_forget()
-            self.labRMList[i][2].grid_forget()
+        self.empty_file_list()
+        self.generate_file_list()
 
-        for i in range(newLLen):
-            self.labRMList[i][1].grid(row=i+1, column=0)
-
-            # redirect del button to new index
-            self.labRMList[i][2].config(command= lambda: self.removeItemFromList(i))
-            self.labRMList[i][2].grid(row=i+1, column=1)
 
 
     def load_files(self):
