@@ -93,7 +93,7 @@ class fileFrame(): # {{{
 
     def generate_file_entry(self, fname):
       i = len(self.labRMList)
-      newLab = tk.Label(self.Frame, text=os.path.basename(fname) )
+      newLab = tk.Label(self.Frame, text=str(1000+i)[1:] + ':  ' + os.path.basename(fname) )
       rmBot  = tk.Button(self.Frame, text='remove', command= lambda: self.removeItemFromList(i) )
       # put new fname and remove button in frame
       newLab.grid(row=i+1, column=0)
