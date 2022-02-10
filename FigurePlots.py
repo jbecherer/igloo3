@@ -27,7 +27,7 @@ class FigureFrame(): # {{{
             else:
                 p.append(plt.subplot(self.Naxis-1,1,ax+1, sharex=p[0] )) 
 
-            plt.plot(self.Dcont.Data[dataAxMap[0]], self.Dcont.Data[dataAxMap[ax+1]], '.')
+            plt.plot(self.Dcont.Data[dataAxMap[0]], self.Dcont.Data[dataAxMap[ax+1]], '.-')
             txt = p[ax].text( 0, 1, self.varList[dataAxMap[ax+1]], ha='left', va='top', transform=p[ax].transAxes)
             txt.set_fontsize(12)
             txt.set_backgroundcolor([1, 1, 1, .5])
